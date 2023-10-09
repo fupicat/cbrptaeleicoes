@@ -1,0 +1,132 @@
+---
+// @ts-nocheck
+import hmacSHA1 from "crypto-js/hmac-sha512";
+import Base64 from "crypto-js/enc-base64";
+import { candidatos } from "../lib/candidatos";
+
+const randomNumber = Math.floor(Math.random() * 999);
+
+const secret = import.meta.env.SECRET;
+
+function obfuscate(str: string) {
+  return Base64.stringify(hmacSHA1(String(randomNumber) + str, secret));
+}
+
+function deobfuscate(str: string) {
+  const [hash, salt] = str.split("::");
+  for (const candidate of candidatos) {
+    if (
+      Base64.stringify(hmacSHA1(String(salt) + candidate.name, secret)) === hash
+    ) {
+      return candidate.name;
+    }
+  }
+  return "Não encontrado";
+}
+
+candidatos.sort(() => Math.random() - 0.5);
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Votação final da CBRPTA!!</title>
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+
+      .candidates {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .candidates .candidate {
+        display: flex;
+        gap: 2rem;
+        padding: 1rem;
+        background-color: white;
+        font-weight: bold;
+      }
+
+      .candidates .candidate:nth-child(odd) {
+        background-color: lightgray;
+      }
+
+      .candidates .candidate img {
+        height: 160px;
+      }
+
+      .candidates .candidate code {
+        display: inline-block;
+        background-color: black;
+        color: white;
+        padding: 0.25rem;
+        overflow-wrap: anywhere;
+      }
+
+      @media (max-width: 768px) {
+        .candidates .candidate {
+          flex-direction: column;
+          text-align: center;
+          align-items: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Eleições da CBRPTA</h1>
+    <p>Holy bingle tivemos um pequeno imprevisto!!!</p>
+    <p>Um empate entre esses 7 candidatos:</p>
+    <p>Agora preciso que você vote em UM deles para ser o vencedor!</p>
+    <h2>Como votar</h2>
+    <ol>
+      <li>Copie o código do candidato em quem você quer votar.</li>
+      <li>
+        Cole ele em um comentário no <a
+          href="https://scratch.mit.edu/projects/905278511/"
+          target="_blank">projeto de votação</a
+        >.
+      </li>
+      <li>Pronto.</li>
+    </ol>
+    <p>Votações fecham Segunda-feira, dia 16/10/2023.</p>
+    <p>Aviso: Candidatos finalistas não podem votar.</p>
+    <h2>Candidatos:</h2>
+    <div class="candidates">
+      {
+        candidatos.map((candidato) => (
+          <div class="candidate">
+            <img src={candidato.image} alt={candidato.name} />
+            <div class="info">
+              <p>
+                Para votar em
+                <a
+                  href={`https://scratch.mit.edu/users/${candidato.name}/`}
+                  target="_blank"
+                >
+                  {candidato.name}
+                </a>
+                :
+              </p>
+              <p>
+                Comente o código:{" "}
+                <code>
+                  {encodeURIComponent(
+                    obfuscate(candidato.name) + "::" + randomNumber
+                  )}
+                </code>
+              </p>
+              <a href={candidato.link} target="_blank">
+                Ver ficha
+              </a>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </body>
+</html>
